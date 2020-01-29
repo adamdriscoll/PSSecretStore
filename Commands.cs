@@ -1,7 +1,8 @@
-﻿using System;
+using System;
 using System.IO;
 using System.Management.Automation;
 using NeoSmart.SecureStore;
+using System.Collections;
 
 namespace PSSecretStore
 {
@@ -43,31 +44,49 @@ namespace PSSecretStore
 
         protected override void ProcessRecord() 
         {
-            StorePath = GetUnresolvedProviderPathFromPSPath(StorePath);
+            try {
+                if (File.Exists(StorePath)) {
+                    using (var sman = SecretsManager.LoadStore(StorePath)) {
+                        if (ParameterSetName == "KeyPath")
+                        {
+                            KeyPath = GetUnresolvedProviderPathFromPSPath(KeyPath);
+                            sman.LoadKeyFromFile(KeyPath);
+                        }
 
-            var validFile = false; 
-            if (File.Exists(StorePath))
-            {
-                var text = File.ReadAllText(StorePath);
-                validFile = text.Length > 0;
+                        if (ParameterSetName == "Password")
+                        {
+                            sman.LoadKeyFromPassword(Password);                
+                        }
+
+                        sman.Set(Name, Value);
+
+                        StorePath = GetUnresolvedProviderPathFromPSPath(StorePath);
+
+                        sman.SaveStore(StorePath);
+                    }   
+                }
             }
-
-            using (var sman = (validFile ? SecretsManager.LoadStore(StorePath) : SecretsManager.CreateStore()))
-            {
-                if (ParameterSetName == "KeyPath")
+            catch {
+                //either the file doesn't exist, or it is a non-secretful file
+                using (var sman = SecretsManager.CreateStore())
                 {
-                    KeyPath = GetUnresolvedProviderPathFromPSPath(KeyPath);
-                    sman.LoadKeyFromFile(KeyPath);
+                    if (ParameterSetName == "KeyPath")
+                    {
+                        KeyPath = GetUnresolvedProviderPathFromPSPath(KeyPath);
+                        sman.LoadKeyFromFile(KeyPath);
+                    }
+
+                    if (ParameterSetName == "Password")
+                    {
+                        sman.LoadKeyFromPassword(Password);                
+                    }
+
+                    sman.Set(Name, Value);
+                    
+                    StorePath = GetUnresolvedProviderPathFromPSPath(StorePath);
+
+                    sman.SaveStore(StorePath);
                 }
-
-                if (ParameterSetName == "Password")
-                {
-                    sman.LoadKeyFromPassword(Password);                
-                }
-
-                sman.Set(Name, Value);
-
-                sman.SaveStore(StorePath);
             }
         }
     }
@@ -75,10 +94,13 @@ namespace PSSecretStore
     [Cmdlet(VerbsCommon.Get, "SSSecret")]
     public class GetSecretCommand : PSCmdlet
     {
-        [Parameter(Mandatory = true)]
+        [Parameter(Mandatory = false)]
         public string Name { get; set; }
         [Parameter(Mandatory = true)]
         public string StorePath { get; set; }
+
+        [Parameter(Mandatory = false)]
+        public SwitchParameter All {get; set;}
 
         [Parameter(Mandatory = true, ParameterSetName = "KeyPath")]
         public string KeyPath { get; set; }
@@ -92,18 +114,39 @@ namespace PSSecretStore
 
             using (var sman = SecretsManager.LoadStore(StorePath))
             {
-                if (ParameterSetName == "KeyPath")
-                {
-                    KeyPath = GetUnresolvedProviderPathFromPSPath(KeyPath);
-                    sman.LoadKeyFromFile(KeyPath);
-                }
+                if (All) {
+                    if (ParameterSetName == "KeyPath")
+                    {
+                        KeyPath = GetUnresolvedProviderPathFromPSPath(KeyPath);
+                        sman.LoadKeyFromFile(KeyPath);
+                    }
 
-                if (ParameterSetName == "Password")
-                {
-                    sman.LoadKeyFromPassword(Password);                
-                }
+                    if (ParameterSetName == "Password")
+                    {
+                        sman.LoadKeyFromPassword(Password);                
+                    }
 
-                WriteObject(sman.Get(Name));
+                    Hashtable toReturn = new Hashtable();
+                    foreach (var k in sman.Keys) {
+                        toReturn.Add(k, sman.Get(k));
+                    }
+                    
+                    WriteObject(toReturn);
+                }
+                else {
+                    if (ParameterSetName == "KeyPath")
+                    {
+                        KeyPath = GetUnresolvedProviderPathFromPSPath(KeyPath);
+                        sman.LoadKeyFromFile(KeyPath);
+                    }
+
+                    if (ParameterSetName == "Password")
+                    {
+                        sman.LoadKeyFromPassword(Password);                
+                    }
+
+                    WriteObject(sman.Get(Name));
+                }
             }
         }
     }
