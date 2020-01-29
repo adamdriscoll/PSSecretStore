@@ -1,3 +1,9 @@
+# 0.0.3 - 1/29/2020
+
+## Added
+
+- Added -All switch to Get-SSSecret
+
 # 0.0.2 - 1/29/2020
 
 ## Changed 
