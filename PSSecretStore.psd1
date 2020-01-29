@@ -30,7 +30,7 @@ CompanyName = 'Unknown'
 Copyright = '(c) Adam Driscoll. All rights reserved.'
 
 # Description of the functionality provided by this module
-# Description = ''
+Description = 'A dead-simple secret store for your secrets'
 
 # Minimum version of the PowerShell engine required by this module
 # PowerShellVersion = ''

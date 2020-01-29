@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Management.Automation;
 using NeoSmart.SecureStore;
 
@@ -42,7 +43,16 @@ namespace PSSecretStore
 
         protected override void ProcessRecord() 
         {
-            using (var sman = SecretsManager.CreateStore())
+            StorePath = GetUnresolvedProviderPathFromPSPath(StorePath);
+
+            var validFile = false; 
+            if (File.Exists(StorePath))
+            {
+                var text = File.ReadAllText(StorePath);
+                validFile = text.Length > 0;
+            }
+
+            using (var sman = (validFile ? SecretsManager.LoadStore(StorePath) : SecretsManager.CreateStore()))
             {
                 if (ParameterSetName == "KeyPath")
                 {
@@ -56,8 +66,6 @@ namespace PSSecretStore
                 }
 
                 sman.Set(Name, Value);
-
-                StorePath = GetUnresolvedProviderPathFromPSPath(StorePath);
 
                 sman.SaveStore(StorePath);
             }
