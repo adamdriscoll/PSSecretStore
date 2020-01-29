@@ -44,27 +44,30 @@ namespace PSSecretStore
 
         protected override void ProcessRecord() 
         {
-            if (File.Exists(StorePath)) {
-                using (var sman = SecretsManager.LoadStore(StorePath)) {
-                    if (ParameterSetName == "KeyPath")
-                    {
-                        KeyPath = GetUnresolvedProviderPathFromPSPath(KeyPath);
-                        sman.LoadKeyFromFile(KeyPath);
-                    }
+            try {
+                if (File.Exists(StorePath)) {
+                    using (var sman = SecretsManager.LoadStore(StorePath)) {
+                        if (ParameterSetName == "KeyPath")
+                        {
+                            KeyPath = GetUnresolvedProviderPathFromPSPath(KeyPath);
+                            sman.LoadKeyFromFile(KeyPath);
+                        }
 
-                    if (ParameterSetName == "Password")
-                    {
-                        sman.LoadKeyFromPassword(Password);                
-                    }
+                        if (ParameterSetName == "Password")
+                        {
+                            sman.LoadKeyFromPassword(Password);                
+                        }
 
-                    sman.Set(Name, Value);
+                        sman.Set(Name, Value);
 
-                    StorePath = GetUnresolvedProviderPathFromPSPath(StorePath);
+                        StorePath = GetUnresolvedProviderPathFromPSPath(StorePath);
 
-                    sman.SaveStore(StorePath);
-                }   
+                        sman.SaveStore(StorePath);
+                    }   
+                }
             }
-            else {
+            catch {
+                //either the file doesn't exist, or it is a non-secretful file
                 using (var sman = SecretsManager.CreateStore())
                 {
                     if (ParameterSetName == "KeyPath")
