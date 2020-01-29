@@ -19,6 +19,18 @@ Describe "PSSecretStore" {
 
             Get-SSSecret -Name 'Secret' -StorePath $Store -Password "Password" | Should be "This is a secret"
         }
+        It "appends existing files with new secrets" {
+            $Store = [IO.Path]::GetTempFileName()
+
+            Set-SSSecret -Name "Secret" -Value "This is a secret" -Password "Password" -StorePath $Store
+
+            Set-SSSecret -Name "UltraSecret" -Value "This is secret 2" -Password "Password" -StorePath $Store
+
+            Get-SSSecret -Name 'Secret' -StorePath $Store -Password "Password" | Should be "This is a secret"
+            Get-SSSecret -Name "UltraSecret" -StorePath $Store -Password "Password" | Should be "This is secret 2"
+        }
+
+        
 
         It "sets a secret by key file" {
             $Store = [IO.Path]::GetTempFileName()
@@ -29,6 +41,17 @@ Describe "PSSecretStore" {
             Set-SSSecret -Name "Secret" -Value "This is a secret" -KeyPath $KeyFile -StorePath $Store
 
             Get-SSSecret -Name 'Secret' -StorePath $Store -KeyPath $KeyFile | Should be "This is a secret"
+        }
+    }
+    context "Get-SSSecret" {
+        It "Gets all the secrets" {
+            $Store = [IO.Path]::GetTempFileName()
+
+            Set-SSSecret -Name "Secret" -Value "This is a secret" -Password "Password" -StorePath $Store
+
+            Set-SSSecret -Name "UltraSecret" -Value "This is secret 2" -Password "Password" -StorePath $Store
+
+            (Get-SSSecret -All -StorePath $Store -Password "Password").count | Should be 2
         }
     }
 }
