@@ -1,6 +1,6 @@
 using System;
-using System.Management.Automation;
 using System.IO;
+using System.Management.Automation;
 using NeoSmart.SecureStore;
 using System.Collections;
 
@@ -82,7 +82,7 @@ namespace PSSecretStore
                     }
 
                     sman.Set(Name, Value);
-
+                    
                     StorePath = GetUnresolvedProviderPathFromPSPath(StorePath);
 
                     sman.SaveStore(StorePath);

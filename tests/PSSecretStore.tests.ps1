@@ -39,8 +39,10 @@ Describe "PSSecretStore" {
             Export-SSKey -KeyPath $KeyFile
 
             Set-SSSecret -Name "Secret" -Value "This is a secret" -KeyPath $KeyFile -StorePath $Store
+            Set-SSSecret -Name "Secret2" -Value "This is a secret" -KeyPath $KeyFile -StorePath $Store
 
             Get-SSSecret -Name 'Secret' -StorePath $Store -KeyPath $KeyFile | Should be "This is a secret"
+            Get-SSSecret -Name 'Secret2' -StorePath $Store -KeyPath $KeyFile | Should be "This is a secret"
         }
     }
     context "Get-SSSecret" {
